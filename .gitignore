@@ -1,0 +1,5 @@
+*\.sw?
+Build/
+Install/
+\.idea/
+cmake-build-debug/
