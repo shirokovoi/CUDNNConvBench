@@ -39,9 +39,9 @@ struct Result
 	std::string ToString();
 	Problem m_Problem;
 	uint32_t m_Repeats;
-	uint64_t m_ForwardElapsedUSec;
-	uint64_t m_BackwardFilterElapsedUSec;
-	uint64_t m_BackwardInputsElapsedUSec;
+	int m_ForwardElapsedUSec;
+	int m_BackwardFilterElapsedUSec;
+	int m_BackwardDataElapsedUSec;
 };
 
 std::ostream& operator<<(std::ostream& s, cudnnConvolutionFwdAlgo_t algo);

@@ -8,6 +8,12 @@
 #include <cudnn.h>
 #include <memory>
 #include <sstream>
+#include <vector>
+#include <numeric>
+
+#include <curand.h>
+#include <thrust/device_ptr.h>
+#include <thrust/fill.h>
 
 void throw_cudnn_err(cudnnStatus_t status, int line, const char* filename) {
     if (status != CUDNN_STATUS_SUCCESS) {
