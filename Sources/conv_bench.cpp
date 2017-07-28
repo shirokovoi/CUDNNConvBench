@@ -278,44 +278,6 @@ void Bench(Problem problem, curandGenerator_t curand_gen, std::vector<Result>& o
 	}
 }
 
-template<typename T>
-bool TryParse(const std::string& str, T& out)
-{
-	std::stringstream ss;
-	T tmp = T();
-	ss << str;
-	ss >> tmp;
-	if (ss.fail())
-		return false;
-
-	out = tmp;
-	return true;
-}
-
-std::vector<std::string> Split(const std::string& str, const std::string& delimiter)
-{
-	std::vector<std::string> result;
-	size_t old_pos = 0;
-	size_t pos;
-
-	while ((pos = str.find(delimiter, old_pos)) != std::string::npos)
-	{
-		result.emplace_back(str.substr(old_pos, pos - old_pos));
-		old_pos = pos + delimiter.size();
-	}
-	result.emplace_back(str.substr(old_pos));
-
-	return result;
-}
-
-std::string Trim(const std::string& str)
-{
-	std::string result = str;
-	result.erase(result.begin(), std::find_if(result.begin(), result.end(), [](int ch){ return !std::isspace(ch); }));
-	result.erase(std::find_if(result.rbegin(), result.rend(), [](int ch){ return !std::isspace(ch); }).base(), result.end());
-	return result;
-}
-
 int main()
 {
 	return 0;
