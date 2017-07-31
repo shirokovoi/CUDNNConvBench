@@ -7,10 +7,12 @@
 
 #include <cudnn.h>
 #include <string>
+#include <map>
 
 struct Size
 {
 	Size();
+	Size(int width, int height);
 
 	std::string ToString();
 	int m_Width;
@@ -40,13 +42,10 @@ struct Result
 	std::string ToString();
 	Problem m_Problem;
 	uint32_t m_Repeats;
-	cudnnConvolutionFwdAlgo_t m_ForwardAlgo;
-	cudnnConvolutionBwdDataAlgo_t m_BackwardDataAlgo;
-	cudnnConvolutionBwdFilterAlgo_t m_BackwardFilterAlgo;
 
-	int m_ForwardElapsedUSec;
-	int m_BackwardFilterElapsedUSec;
-	int m_BackwardDataElapsedUSec;
+	std::map<cudnnConvolutionFwdAlgo_t, int> m_ForwardTimes;
+	std::map<cudnnConvolutionBwdDataAlgo_t, int> m_BackwardDataTimes;
+	std::map<cudnnConvolutionBwdFilterAlgo_t, int> m_BackwardFilterTimes;
 };
 
 std::string FwdAlgo_ToString(cudnnConvolutionFwdAlgo_t algo);

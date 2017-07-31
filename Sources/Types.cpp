@@ -6,10 +6,16 @@
 #include <sstream>
 #include <vector>
 #include <algorithm>
+#include <cassert>
 
 Size::Size():
     m_Width(0),
     m_Height(0)
+{ }
+
+Size::Size(int width, int height):
+    m_Width(width),
+    m_Height(height)
 { }
 
 std::string Size::ToString()
@@ -66,25 +72,24 @@ bool Problem::Parse(const std::string& line)
 {
 	auto tokens_strs = Split(line, ",");
 	std::vector<int> tokens;
-	std::transform(tokens_strs.begin(), tokens_strs.end(), tokens.begin(),
-	               [](const std::string& str)
-	               {
-		               int out;
-		               TryParse(Trim(str), out);
-		               return out;
-	               });
+	for (auto& token_str: tokens_strs)
+	{
+		int token = 0;
+		TryParse(Trim(token_str), token);
+		tokens.emplace_back(token);
+	}
 
 	m_InputSize.m_Width = tokens[0];
 	m_InputSize.m_Height = tokens[1];
-	m_FilterSize.m_Width = tokens[2];
-	m_FilterSize.m_Height = tokens[3];
-	m_Stride.m_Width = tokens[4];
-	m_Stride.m_Height = tokens[5];
-	m_Padding.m_Width = tokens[6];
-	m_Padding.m_Height = tokens[7];
-	m_BatchSize = tokens[8];
-	m_InputMaps = tokens[9];
-	m_OutputMaps = tokens[10];
+	m_InputMaps = tokens[2];
+	m_BatchSize = tokens[3];
+	m_OutputMaps = tokens[4];
+	m_FilterSize.m_Width = tokens[5];
+	m_FilterSize.m_Height = tokens[6];
+	m_Padding.m_Width = tokens[7];
+	m_Padding.m_Height = tokens[8];
+	m_Stride.m_Width = tokens[9];
+	m_Stride.m_Height = tokens[10];
 
 	return true;
 }
@@ -93,29 +98,37 @@ std::string Problem::ToString()
 {
 	std::stringstream ss;
 	ss << m_InputSize.ToString() << ", "
-       << m_FilterSize.ToString() << ", "
-       << m_Stride.ToString() << ", "
-       << m_Padding.ToString() << ", "
-       << m_BatchSize << ", "
-       << m_InputMaps << ", "
-       << m_OutputMaps;
+	   << m_InputMaps << ", "
+	   << m_BatchSize << ", "
+	   << m_OutputMaps << ", "
+	   << m_FilterSize.ToString() << ", "
+	   << m_Padding.ToString() << ", "
+	   << m_Stride.ToString();
 
 	return ss.str();
 }
 
 Result::Result():
-    m_Repeats(0),
-    m_ForwardElapsedUSec(0),
-    m_BackwardFilterElapsedUSec(0),
-    m_BackwardDataElapsedUSec(0)
+    m_Repeats(0)
 { }
 
 std::string Result::ToString()
 {
 	std::stringstream ss;
-	ss << m_Problem.ToString() << ", " << m_Repeats << ", " << m_ForwardElapsedUSec << ", "
-       << FwdAlgo_ToString(m_ForwardAlgo) << ", " << BwdFilter_ToString(m_BackwardFilterAlgo) << ", " << BwdData_ToString(m_BackwardDataAlgo) << ", "
-       << m_ForwardElapsedUSec << ", " << m_BackwardFilterElapsedUSec << ", " << m_BackwardDataElapsedUSec;
+	for (auto& fwd: m_ForwardTimes)
+	{
+		ss << m_Problem.ToString() << ", " << m_Repeats << ", Forward, " << FwdAlgo_ToString(fwd.first) << ", " << fwd.second << std::endl;
+	}
+
+	for (auto& bwd_data: m_BackwardDataTimes)
+	{
+		ss << m_Problem.ToString() << ", " << m_Repeats << ", Backward Data, " << BwdData_ToString(bwd_data.first) << ", " <<  bwd_data.second << std::endl;
+	}
+
+	for (auto& bwd_filter: m_BackwardFilterTimes)
+	{
+		ss << m_Problem.ToString() << ", " << m_Repeats << ", Backward Filter, " << BwdFilter_ToString(bwd_filter.first) << ", " << bwd_filter.second << std::endl;
+	}
 
 	return ss.str();
 }
@@ -149,6 +162,8 @@ std::string FwdAlgo_ToString(cudnnConvolutionFwdAlgo_t algo)
 		case CUDNN_CONVOLUTION_FWD_ALGO_WINOGRAD_NONFUSED:
 			ss << "WINOGRAD_NONFUSED";
 			break;
+		default:
+			ss << algo;
 	}
 
 	return ss.str();
@@ -177,6 +192,8 @@ std::string BwdData_ToString(cudnnConvolutionBwdDataAlgo_t algo)
 		case CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD_NONFUSED:
 			ss << "WINOGRAD_NONFUSED";
 			break;
+		default:
+			ss << algo;
 	}
 
 	return ss.str();
@@ -199,9 +216,14 @@ std::string BwdFilter_ToString(cudnnConvolutionBwdFilterAlgo_t algo)
 		case CUDNN_CONVOLUTION_BWD_FILTER_ALGO_3:
 			ss << "ALGO_3";
 			break;
+		case (cudnnConvolutionBwdFilterAlgo_t)4:
+			ss << "WINDOGRAD (Unsupported)";
+			break;
 		case CUDNN_CONVOLUTION_BWD_FILTER_ALGO_WINOGRAD_NONFUSED:
 			ss << "WINOGRAD_NONFUSED";
 			break;
+		default:
+			ss << algo;
 	}
 
 	return ss.str();
